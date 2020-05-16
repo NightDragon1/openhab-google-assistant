@@ -19,7 +19,7 @@
  */
 
 const hasTag = (item = {}, tag = '') => {
-  return item.tags && item.tags.map(t => t.toLowerCase()).includes(tag.toLowerCase());
+  return item.tags && item.tags.map(t => t.toLowerCase()).includes(tag.toLowerCase()) || false;
 };
 
 const getDeviceForItem = (item = {}) => {
@@ -56,22 +56,22 @@ class GenericDevice {
       type: this.type,
       traits: this.traits,
       name: {
-        name: config.name || item.label,
-        defaultNames: [config.name || item.label],
-        nicknames: [config.name || item.label, ...(item.metadata && item.metadata.synonyms ? item.metadata.synonyms.value.split(',') : [])]
+        name: config.name || item.label,
+        defaultNames: [config.name || item.label],
+        nicknames: [config.name || item.label, ...(item.metadata && item.metadata.synonyms ? item.metadata.synonyms.value.split(',') : [])]
       },
       willReportState: false,
       roomHint: config.roomHint,
       structureHint: config.structureHint,
       deviceInfo: {
         manufacturer: 'openHAB',
-        model: item.type,
+        model: item.label,
         hwVersion: '2.5.0',
         swVersion: '2.5.0'
       },
       attributes: this.getAttributes(item),
       customData: {
-        itemType: item.type,
+        itemType: item.type === 'Group' ? item.groupType : item.type,
         deviceType: this.type,
         tfaAck: config.tfaAck,
         tfaPin: config.tfaPin
@@ -79,15 +79,15 @@ class GenericDevice {
     };
   }
 
-  static get requiredItemType() {
-    return '';
+  static get requiredItemTypes() {
+    return [];
   }
 
   static checkItemType(item = {}) {
     return (
-      !this.requiredItemType ||
-      item.type === this.requiredItemType ||
-      (item.type === 'Group' && item.groupType && item.groupType === this.requiredItemType)
+      !this.requiredItemTypes.length ||
+      this.requiredItemTypes.includes(item.type) ||
+      (item.type === 'Group' && item.groupType && this.requiredItemTypes.includes(item.groupType))
     );
   }
 
@@ -109,13 +109,23 @@ class Switch extends GenericDevice {
     ];
   }
 
-  static get requiredItemType() {
-    return 'Switch';
+  static getMetadata(item) {
+    const metadata = super.getMetadata(item);
+    metadata.customData.inverted = getConfig(item).inverted === true;
+    return metadata;
+  }
+
+  static get requiredItemTypes() {
+    return ['Switch'];
   }
 
   static getState(item) {
+    let state = item.state === 'ON';
+    if (getConfig(item).inverted === true) {
+      state = !state;
+    }
     return {
-      on: item.state === 'ON'
+      on: state
     };
   }
 }
@@ -175,8 +185,8 @@ class Valve extends GenericDevice {
     ];
   }
 
-  static get requiredItemType() {
-    return 'Switch';
+  static get requiredItemTypes() {
+    return ['Switch'];
   }
 
   static getState(item) {
@@ -195,8 +205,8 @@ class StartStopSwitch extends GenericDevice {
     ];
   }
 
-  static get requiredItemType() {
-    return 'Switch';
+  static get requiredItemTypes() {
+    return ['Switch'];
   }
 
   static getState(item) {
@@ -232,8 +242,8 @@ class Scene extends GenericDevice {
     ];
   }
 
-  static get requiredItemType() {
-    return 'Switch'
+  static get requiredItemTypes() {
+    return ['Switch'];
   }
 
   static getAttributes() {
@@ -256,8 +266,8 @@ class Lock extends GenericDevice {
     ];
   }
 
-  static get requiredItemType() {
-    return 'Switch';
+  static get requiredItemTypes() {
+    return ['Switch'];
   }
 
   static getState(item) {
@@ -280,8 +290,8 @@ class SecuritySystem extends GenericDevice {
     ];
   }
 
-  static get requiredItemType() {
-    return 'Switch';
+  static get requiredItemTypes() {
+    return ['Switch'];
   }
 
   static getState(item) {
@@ -313,8 +323,8 @@ class DimmableLight extends GenericDevice {
     ];
   }
 
-  static get requiredItemType() {
-    return 'Dimmer';
+  static get requiredItemTypes() {
+    return ['Dimmer'];
   }
 
   static getState(item) {
@@ -358,8 +368,8 @@ class ColorLight extends GenericDevice {
     return attributes;
   }
 
-  static get requiredItemType() {
-    return 'Color';
+  static get requiredItemTypes() {
+    return ['Color'];
   }
 
   static getState(item) {
@@ -394,13 +404,20 @@ class GenericOpenCloseDevice extends GenericDevice {
     return metadata;
   }
 
-  static get requiredItemType() {
-    return 'Rollershutter';
+  static get requiredItemTypes() {
+    return ['Rollershutter', 'Switch'];
   }
 
   static getState(item) {
+    let state = 0;
+    const itemType = item.type === 'Group' ? item.groupType : item.type;
+    if (itemType == 'Switch') {
+      state = item.state === 'ON' ? 0 : 100;
+    } else {
+      state = Number(item.state);
+    }
     return {
-      openPercent: getConfig(item).inverted === true ? Number(item.state) : 100 - Number(item.state)
+      openPercent: getConfig(item).inverted !== true ? 100 - state : state
     };
   }
 }
@@ -470,8 +487,8 @@ class Speaker extends GenericDevice {
     ];
   }
 
-  static get requiredItemType() {
-    return 'Dimmer';
+  static get requiredItemTypes() {
+    return ['Dimmer'];
   }
 
   static getState(item) {
@@ -502,8 +519,8 @@ class Camera extends GenericDevice {
     };
   }
 
-  static get requiredItemType() {
-    return 'String';
+  static get requiredItemTypes() {
+    return ['String'];
   }
 }
 
@@ -546,8 +563,8 @@ class Fan extends GenericDevice {
     return attributes;
   }
 
-  static get requiredItemType() {
-    return 'Dimmer';
+  static get requiredItemTypes() {
+    return ['Dimmer'];
   }
 
   static getState(item) {
@@ -591,19 +608,9 @@ class Thermostat extends GenericDevice {
       !('thermostatTemperatureSetpoint' in members)) {
       attributes.queryOnlyTemperatureSetting = true;
     } else {
-      attributes.availableThermostatModes = getConfig(item).modes || 'off,heat,cool,on,heatcool';
+      attributes.availableThermostatModes = Object.keys(this.getModeMap(item)).join(',');
     }
     return attributes;
-  }
-
-  static getMetadata(item) {
-    const metadata = super.getMetadata(item);
-    const members = this.getMembers(item);
-    for (const member in members) {
-      metadata.customData[member] = members[member].name;
-    }
-    metadata.customData.useFahrenheit = this.usesFahrenheit(item);
-    return metadata;
   }
 
   static checkItemType(item) {
@@ -615,7 +622,7 @@ class Thermostat extends GenericDevice {
     const members = this.getMembers(item);
     for (const member in members) {
       if (member == 'thermostatMode') {
-        state[member] = this.normalizeThermostatMode(members[member].state);
+        state[member] = this.translateModeToGoogle(item, members[member].state);
       } else {
         state[member] = Number(parseFloat(members[member].state).toFixed(1));
         if (member.indexOf('Temperature') > 0 && this.usesFahrenheit(item)) {
@@ -666,28 +673,36 @@ class Thermostat extends GenericDevice {
     return getConfig(item).useFahrenheit === true || hasTag(item, 'Fahrenheit');
   }
 
-  static get _modeMap() {
-    return ['off', 'heat', 'cool', 'on', 'heatcool', 'auto'];
-  }
-
-  static normalizeThermostatMode(mode) {
-    let normalizedMode = mode.replace('-', '');
-    const intMode = Number(mode);
-    if (!isNaN(intMode)) {
-      normalizedMode = intMode in this._modeMap ? this._modeMap[intMode] : 'off';
+  static getModeMap(item) {
+    const config = getConfig(item);
+    let modes = ['off', 'heat', 'cool', 'on', 'heatcool', 'auto', 'eco'];
+    if ('modes' in config) {
+      modes = config.modes.split(',');
     }
-    return normalizedMode.toLowerCase();
+    const modeMap = {};
+    modes.forEach(pair => {
+      const [ key, value ] = pair.split('=');
+      modeMap[key] = value ? value.split(':') : [key];
+    });
+    return modeMap;
   }
 
-  static denormalizeThermostatMode(oldMode, newMode) {
-    let denormalizedMode = newMode.replace('-', '');
-    if (!isNaN(Number(oldMode))) {
-      denormalizedMode = this._modeMap.indexOf(newMode);
-      if (denormalizedMode < 0) {
-        denormalizedMode = 0;
+  static translateModeToOpenhab(item, mode) {
+    const modeMap = this.getModeMap(item);
+    if (mode in modeMap) {
+      return modeMap[mode][0];
+    }
+    throw { statusCode: 400 };
+  }
+
+  static translateModeToGoogle(item, mode) {
+    const modeMap = this.getModeMap(item);
+    for (const key in modeMap) {
+      if (modeMap[key].includes(mode)) {
+        return key;
       }
     }
-    return denormalizedMode.toString();
+    return 'on';
   }
 
   static convertToFahrenheit(value = 0) {

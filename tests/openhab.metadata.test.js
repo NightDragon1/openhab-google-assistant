@@ -160,7 +160,7 @@ describe('Test SYNC with Metadata', () => {
 });
 
 describe('Test QUERY with Metadata', () => {
-  test('Single Light Device', async () => {
+  test('Switch Device', async () => {
     const item =
     {
       "state": "OFF",
@@ -168,7 +168,7 @@ describe('Test QUERY with Metadata', () => {
       "name": "MySwitch",
       "metadata": {
         "ga": {
-          "value": "Light"
+          "value": "Switch"
         }
       }
     };
@@ -189,6 +189,44 @@ describe('Test QUERY with Metadata', () => {
       "devices": {
         "MySwitch": {
           "on": false,
+          "online": true,
+        },
+      },
+    });
+  });
+
+  test('Inverted Switch Device', async () => {
+    const item =
+    {
+      "state": "OFF",
+      "type": "Switch",
+      "name": "MySwitch",
+      "metadata": {
+        "ga": {
+          "value": "Switch",
+          "config": {
+            "inverted": true
+          }
+        }
+      }
+    };
+
+    const getItemMock = jest.fn();
+    getItemMock.mockReturnValue(Promise.resolve(item));
+
+    const apiHandler = {
+      getItem: getItemMock
+    };
+
+    const payload = await new OpenHAB(apiHandler).handleQuery([{
+      "id": "MySwitch"
+    }]);
+
+    expect(getItemMock).toHaveBeenCalledTimes(1);
+    expect(payload).toStrictEqual({
+      "devices": {
+        "MySwitch": {
+          "on": true,
           "online": true,
         },
       },
@@ -250,6 +288,114 @@ describe('Test QUERY with Metadata', () => {
     });
   });
 
+  test('Blinds as Rollershutter Device', async () => {
+    const item =
+    {
+      "state": "20",
+      "type": "Rollershutter",
+      "name": "MyBlinds",
+      "metadata": {
+        "ga": {
+          "value": "Blinds"
+        }
+      }
+    };
+
+    const getItemMock = jest.fn();
+    getItemMock.mockReturnValue(Promise.resolve(item));
+
+    const apiHandler = {
+      getItem: getItemMock
+    };
+
+    const payload = await new OpenHAB(apiHandler).handleQuery([{
+      "id": "MyBlinds"
+    }]);
+
+    expect(getItemMock).toHaveBeenCalledTimes(1);
+    expect(payload).toStrictEqual({
+      "devices": {
+        "MyBlinds": {
+          "openPercent": 80,
+          "online": true,
+        },
+      },
+    });
+  });
+
+  test('Inverted Blinds as Rollershutter Device', async () => {
+    const item =
+    {
+      "state": "20",
+      "type": "Rollershutter",
+      "name": "MyBlinds",
+      "metadata": {
+        "ga": {
+          "value": "Blinds",
+          "config": {
+            "inverted": true
+          }
+        }
+      }
+    };
+
+    const getItemMock = jest.fn();
+    getItemMock.mockReturnValue(Promise.resolve(item));
+
+    const apiHandler = {
+      getItem: getItemMock
+    };
+
+    const payload = await new OpenHAB(apiHandler).handleQuery([{
+      "id": "MyBlinds"
+    }]);
+
+    expect(getItemMock).toHaveBeenCalledTimes(1);
+    expect(payload).toStrictEqual({
+      "devices": {
+        "MyBlinds": {
+          "openPercent": 20,
+          "online": true,
+        },
+      },
+    });
+  });
+
+  test('Blinds as Switch Device', async () => {
+    const item =
+    {
+      "state": "OFF",
+      "type": "Switch",
+      "name": "MyBlinds",
+      "metadata": {
+        "ga": {
+          "value": "Blinds"
+        }
+      }
+    };
+
+    const getItemMock = jest.fn();
+    getItemMock.mockReturnValue(Promise.resolve(item));
+
+    const apiHandler = {
+      getItem: getItemMock
+    };
+
+    const payload = await new OpenHAB(apiHandler).handleQuery([{
+      "id": "MyBlinds"
+    }]);
+
+    expect(getItemMock).toHaveBeenCalledTimes(1);
+    expect(payload).toStrictEqual({
+      "devices": {
+        "MyBlinds": {
+          "openPercent": 0,
+          "online": true,
+        },
+      },
+    });
+  });
+
   test('Fan Device', async () => {
     const item = {
       "state": "50",
@@ -288,9 +434,170 @@ describe('Test QUERY with Metadata', () => {
       },
     });
   });
+
+  test('Thermostat Device', async () => {
+    const item =
+    {
+      "state": "NULL",
+      "type": "Group",
+      "name": "MyThermostat",
+      "label": "Thermostat",
+      "metadata": {
+        "ga": {
+          "value": "Thermostat",
+          "config": {
+            "useFahrenheit": true,
+            "modes": "off=OFF:WINDOW_OPEN,heat=COMFORT:BOOST,eco=ECO,on=ON,auto=AUTOMATIC"
+          }
+        }
+      },
+      "members": [{
+        type: 'Number',
+        metadata: {
+          ga: {
+            value: 'thermostatTemperatureAmbient'
+          }
+        },
+        state: '10'
+      }, {
+        name: 'MyTargetTemperature',
+        type: 'Number',
+        metadata: {
+          ga: {
+            value: 'thermostatTemperatureSetpoint'
+          }
+        },
+        state: '10'
+      }, {
+        type: 'Number',
+        metadata: {
+          ga: {
+            value: 'thermostatMode'
+          }
+        },
+        state: 'COMFORT'
+      }, {
+        type: 'Number',
+        metadata: {
+          ga: {
+            value: 'thermostatHumidityAmbient'
+          }
+        },
+        state: '50'
+      }]
+    };
+    const getItemMock = jest.fn();
+    getItemMock.mockReturnValue(Promise.resolve(item));
+
+    const apiHandler = {
+      getItem: getItemMock
+    };
+
+    const payload = await new OpenHAB(apiHandler).handleQuery([{
+      "id": "MyThermostat"
+    }]);
+
+    expect(getItemMock).toHaveBeenCalledTimes(1);
+    expect(payload).toStrictEqual({
+      "devices": {
+        "MyThermostat": {
+          "thermostatHumidityAmbient": 50,
+          "thermostatMode": "heat",
+          "thermostatTemperatureAmbient": -12.2,
+          "thermostatTemperatureSetpoint": -12.2,
+          "online": true
+        },
+      },
+    });
+  });
 });
 
 describe('Test EXECUTE with Metadata', () => {
+  test('OnOff with Switch Device', async () => {
+    const getItemMock = jest.fn();
+    const sendCommandMock = jest.fn();
+    getItemMock.mockReturnValue(Promise.resolve());
+    sendCommandMock.mockReturnValue(Promise.resolve());
+
+    const apiHandler = {
+      getItem: getItemMock,
+      sendCommand: sendCommandMock
+    };
+
+    const commands = [{
+      "devices": [{
+        "id": "MySwitch"
+      }],
+      "execution": [{
+        "command": "action.devices.commands.OnOff",
+        "params": {
+          "on": true
+        }
+      }]
+    }];
+
+    const payload = await new OpenHAB(apiHandler).handleExecute(commands);
+
+    expect(getItemMock).toHaveBeenCalledTimes(0);
+    expect(sendCommandMock).toBeCalledWith('MySwitch', 'ON');
+    expect(payload).toStrictEqual({
+      "commands": [{
+        "ids": [
+          "MySwitch"
+        ],
+        "states": {
+          "online": true,
+          "on": true
+        },
+        "status": "SUCCESS"
+      }]
+    });
+  });
+
+  test('OnOff with Inverted Switch Device', async () => {
+    const getItemMock = jest.fn();
+    const sendCommandMock = jest.fn();
+    getItemMock.mockReturnValue(Promise.resolve());
+    sendCommandMock.mockReturnValue(Promise.resolve());
+
+    const apiHandler = {
+      getItem: getItemMock,
+      sendCommand: sendCommandMock
+    };
+
+    const commands = [{
+      "devices": [{
+        "id": "MySwitch",
+        "customData": {
+          "inverted": true
+        }
+      }],
+      "execution": [{
+        "command": "action.devices.commands.OnOff",
+        "params": {
+          "on": true
+        }
+      }]
+    }];
+
+    const payload = await new OpenHAB(apiHandler).handleExecute(commands);
+
+    expect(getItemMock).toHaveBeenCalledTimes(0);
+    expect(sendCommandMock).toBeCalledWith('MySwitch', 'OFF');
+    expect(payload).toStrictEqual({
+      "commands": [{
+        "ids": [
+          "MySwitch"
+        ],
+        "states": {
+          "online": true,
+          "on": true
+        },
+        "status": "SUCCESS"
+      }]
+    });
+  });
+
   test('ThermostatTemperatureSetpoint', async () => {
     const item =
     {
@@ -330,7 +637,7 @@ describe('Test EXECUTE with Metadata', () => {
             value: 'thermostatMode'
           }
         },
-        state: '1'
+        state: 'heat'
       }, {
         type: 'Number',
         metadata: {
@@ -354,9 +661,6 @@ describe('Test EXECUTE with Metadata', () => {
 
     const commands = [{
       "devices": [{
-        "customData": {
-          "thermostatTemperatureSetpoint": "MyTargetTemperature"
-        },
         "id": "MyThermostat"
       }],
       "execution": [{
@@ -530,10 +834,6 @@ describe('Test EXECUTE with Metadata', () => {
 
     const commands = [{
       "devices": [{
-        "customData": {
-          "thermostatTemperatureSetpointHigh": "MyTargetTemperatureHigh",
-          "thermostatTemperatureSetpointLow": "MyTargetTemperatureLow"
-        },
         "id": "MyThermostat"
       }],
       "execution": [{
@@ -569,7 +869,7 @@ describe('Test EXECUTE with Metadata', () => {
     });
   });
 
-  test('ThermostatSetMode', async () => {
+  test('ThermostatSetMode invalid', async () => {
     const item =
     {
       "state": "NULL",
@@ -578,7 +878,10 @@ describe('Test EXECUTE with Metadata', () => {
       "label": "Thermostat",
       "metadata": {
         "ga": {
-          "value": "Thermostat"
+          "value": "Thermostat",
+          "config": {
+            "modes": "on=3,heat=5"
+          }
         }
       },
       "members": [{
@@ -599,6 +902,96 @@ describe('Test EXECUTE with Metadata', () => {
         },
         state: '10'
       }, {
+        name: 'MyMode',
+        type: 'Number',
+        metadata: {
+          ga: {
+            value: 'thermostatMode'
+          }
+        },
+        state: '3'
+      }, {
+        type: 'Number',
+        metadata: {
+          ga: {
+            value: 'thermostatHumidityAmbient'
+          }
+        },
+        state: '50'
+      }]
+    };
+
+    const getItemMock = jest.fn();
+    const sendCommandMock = jest.fn();
+    getItemMock.mockReturnValue(Promise.resolve(item));
+    sendCommandMock.mockReturnValue(Promise.resolve());
+
+    const apiHandler = {
+      getItem: getItemMock,
+      sendCommand: sendCommandMock
+    };
+
+    const commands = [{
+      "devices": [{
+        "id": "MyThermostat"
+      }],
+      "execution": [{
+        "command": "action.devices.commands.ThermostatSetMode",
+        "params": {
+          "thermostatMode": "off"
+        }
+      }]
+    }];
+
+    const payload = await new OpenHAB(apiHandler).handleExecute(commands);
+
+    expect(getItemMock).toHaveBeenCalledTimes(1);
+    expect(sendCommandMock).toHaveBeenCalledTimes(0);
+    expect(payload).toStrictEqual({
+      "commands": [{
+        "ids": [
+          "MyThermostat"
+        ],
+        "errorCode": "notSupported",
+        "status": "ERROR"
+      }]
+    });
+  });
+
+  test('ThermostatSetMode', async () => {
+    const item =
+    {
+      "state": "NULL",
+      "type": "Group",
+      "name": "MyThermostat",
+      "label": "Thermostat",
+      "metadata": {
+        "ga": {
+          "value": "Thermostat",
+          "config": {
+            "modes": "on=1,off=5"
+          }
+        }
+      },
+      "members": [{
+        type: 'Number',
+        metadata: {
+          ga: {
+            value: 'thermostatTemperatureAmbient'
+          }
+        },
+        state: '20'
+      }, {
+        name: 'MyTargetTemperature',
+        type: 'Number',
+        metadata: {
+          ga: {
+            value: 'thermostatTemperatureSetpoint'
+          }
+        },
+        state: '10'
+      }, {
+        name: 'MyMode',
         type: 'Number',
         metadata: {
           ga: {
@@ -629,9 +1022,6 @@ describe('Test EXECUTE with Metadata', () => {
 
     const commands = [{
       "devices": [{
-        "customData": {
-          "thermostatMode": "MyMode"
-        },
         "id": "MyThermostat"
       }],
       "execution": [{
@@ -645,7 +1035,7 @@ describe('Test EXECUTE with Metadata', () => {
     const payload = await new OpenHAB(apiHandler).handleExecute(commands);
 
     expect(getItemMock).toHaveBeenCalledTimes(1);
-    expect(sendCommandMock).toBeCalledWith('MyMode', '0');
+    expect(sendCommandMock).toBeCalledWith('MyMode', '5');
     expect(payload).toStrictEqual({
       "commands": [{
         "ids": [
@@ -949,6 +1339,94 @@ describe('Test EXECUTE with Metadata', () => {
         "states": {
           "online": true,
           "isArmed": true
+        },
+        "status": "SUCCESS"
+      }]
+    });
+  });
+
+  test('OpenClose Blinds Group as Rollershutter', async () => {
+    const getItemMock = jest.fn();
+    const sendCommandMock = jest.fn();
+    getItemMock.mockReturnValue(Promise.resolve());
+    sendCommandMock.mockReturnValue(Promise.resolve());
+
+    const apiHandler = {
+      getItem: getItemMock,
+      sendCommand: sendCommandMock
+    };
+
+    const commands = [{
+      "devices": [{
+        "id": "MyBlinds",
+        "customData": {
+          "itemType": "Rollershutter"
+        }
+      }],
+      "execution": [{
+        "command": "action.devices.commands.OpenClose",
+        "params": {
+          "openPercent": 0
+        }
+      }]
+    }];
+
+    const payload = await new OpenHAB(apiHandler).handleExecute(commands);
+
+    expect(getItemMock).toHaveBeenCalledTimes(0);
+    expect(sendCommandMock).toBeCalledWith('MyBlinds', 'DOWN');
+    expect(payload).toStrictEqual({
+      "commands": [{
+        "ids": [
+          "MyBlinds"
+        ],
+        "states": {
+          "online": true,
+          "openPercent": 0
+        },
+        "status": "SUCCESS"
+      }]
+    });
+  });
+
+  test('OpenClose Blinds Group as Switch', async () => {
+    const getItemMock = jest.fn();
+    const sendCommandMock = jest.fn();
+    getItemMock.mockReturnValue(Promise.resolve());
+    sendCommandMock.mockReturnValue(Promise.resolve());
+
+    const apiHandler = {
+      getItem: getItemMock,
+      sendCommand: sendCommandMock
+    };
+
+    const commands = [{
+      "devices": [{
+        "id": "MyBlinds",
+        "customData": {
+          "itemType": "Switch"
+        }
+      }],
+      "execution": [{
+        "command": "action.devices.commands.OpenClose",
+        "params": {
+          "openPercent": 0
+        }
+      }]
+    }];
+
+    const payload = await new OpenHAB(apiHandler).handleExecute(commands);
+
+    expect(getItemMock).toHaveBeenCalledTimes(0);
+    expect(sendCommandMock).toBeCalledWith('MyBlinds', 'OFF');
+    expect(payload).toStrictEqual({
+      "commands": [{
+        "ids": [
+          "MyBlinds"
+        ],
+        "states": {
+          "online": true,
+          "openPercent": 0
         },
         "status": "SUCCESS"
       }]
