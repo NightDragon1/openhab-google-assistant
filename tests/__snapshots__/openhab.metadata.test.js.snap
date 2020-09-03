@@ -49,6 +49,7 @@ Object {
       },
       "customData": Object {
         "deviceType": "action.devices.types.FAN",
+        "inverted": false,
         "itemType": "Dimmer",
         "tfaAck": undefined,
         "tfaPin": undefined,
@@ -124,6 +125,7 @@ Object {
       "attributes": Object {},
       "customData": Object {
         "deviceType": "action.devices.types.LIGHT",
+        "inverted": false,
         "itemType": "Dimmer",
         "tfaAck": undefined,
         "tfaPin": undefined,
@@ -159,6 +161,7 @@ Object {
       },
       "customData": Object {
         "deviceType": "action.devices.types.LIGHT",
+        "inverted": false,
         "itemType": "Color",
         "tfaAck": undefined,
         "tfaPin": undefined,
@@ -226,6 +229,7 @@ Object {
       "attributes": Object {},
       "customData": Object {
         "deviceType": "action.devices.types.LIGHT",
+        "inverted": false,
         "itemType": "Dimmer",
         "tfaAck": undefined,
         "tfaPin": undefined,
@@ -261,6 +265,7 @@ Object {
       },
       "customData": Object {
         "deviceType": "action.devices.types.LIGHT",
+        "inverted": false,
         "itemType": "Color",
         "tfaAck": undefined,
         "tfaPin": undefined,
@@ -304,6 +309,7 @@ Object {
       },
       "customData": Object {
         "deviceType": "action.devices.types.SCENE",
+        "inverted": false,
         "itemType": "Switch",
         "tfaAck": undefined,
         "tfaPin": undefined,
@@ -330,6 +336,48 @@ Object {
         "action.devices.traits.Scene",
       ],
       "type": "action.devices.types.SCENE",
+      "willReportState": false,
+    },
+  ],
+}
+`;
+
+exports[`Test SYNC with Metadata Thermostat Device 1`] = `
+Object {
+  "devices": Array [
+    Object {
+      "attributes": Object {
+        "availableThermostatModes": "off,heat,eco,auto",
+        "thermostatTemperatureUnit": "C",
+      },
+      "customData": Object {
+        "deviceType": "action.devices.types.THERMOSTAT",
+        "itemType": undefined,
+        "tfaAck": undefined,
+        "tfaPin": undefined,
+      },
+      "deviceInfo": Object {
+        "hwVersion": "2.5.0",
+        "manufacturer": "openHAB",
+        "model": "My Thermostat",
+        "swVersion": "2.5.0",
+      },
+      "id": "MyThermostat",
+      "name": Object {
+        "defaultNames": Array [
+          "My Thermostat",
+        ],
+        "name": "My Thermostat",
+        "nicknames": Array [
+          "My Thermostat",
+        ],
+      },
+      "roomHint": undefined,
+      "structureHint": undefined,
+      "traits": Array [
+        "action.devices.traits.TemperatureSetting",
+      ],
+      "type": "action.devices.types.THERMOSTAT",
       "willReportState": false,
     },
   ],
