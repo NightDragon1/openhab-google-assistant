@@ -1,6 +1,6 @@
 {
   "name": "openhab.google-assistant-smarthome",
-  "version": "2.0.22",
+  "version": "3.1.0",
   "description": "A Google Assistant, Actions on Google based implementation for openHAB",
   "main": "functions/index.js",
   "repository": {
@@ -13,7 +13,18 @@
   ],
   "scripts": {
     "start": "node testServer.js",
-    "test": "jest"
+    "test": "jest --silent --coverage",
+    "test-ci": "jest --silent --coverage --ci",
+    "lint": "eslint --ext .js --cache .",
+    "fix": "eslint --fix --ext .js --cache .",
+    "release-major": "npm version major -m \":bookmark: Release (major): %s\"",
+    "release-minor": "npm version minor -m \":bookmark: Release (minor): %s\"",
+    "release-patch": "npm version patch -m \":bookmark: Release (patch): %s\""
+  },
+  "jest": {
+    "setupFiles": [
+      "./tests/setenv.js"
+    ]
   },
   "license": "EPL-2.0",
   "bugs": {
@@ -21,11 +32,15 @@
   },
   "homepage": "https://github.com/openhab/openhab-google-assistant",
   "dependencies": {
-    "body-parser": "^1.19.0",
     "express": "^4.17.1"
   },
   "devDependencies": {
-    "@types/jest": "^24.9.1",
-    "jest": "^24.9.0"
+    "@types/jest": "^26.0.23",
+    "eslint": "^7.29.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "jest": "^27.0.4",
+    "nock": "^13.1.0",
+    "prettier": "2.3.1"
   }
 }
